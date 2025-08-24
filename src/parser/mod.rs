@@ -1,4 +1,6 @@
 pub mod python;
+pub mod javascript;
+pub mod rust;
 
 use crate::graph::{CallEdge, CodeGraph, FunctionNode, Language};
 use anyhow::Result;
@@ -13,12 +15,18 @@ pub trait LanguageParser {
 
 pub struct ParserManager {
     python_parser: python::PythonParser,
+    javascript_parser: javascript::JavaScriptParser,
+    typescript_parser: javascript::JavaScriptParser,
+    rust_parser: rust::RustParser,
 }
 
 impl ParserManager {
     pub fn new() -> Result<Self> {
         Ok(Self {
             python_parser: python::PythonParser::new()?,
+            javascript_parser: javascript::JavaScriptParser::new(false)?,
+            typescript_parser: javascript::JavaScriptParser::new(true)?,
+            rust_parser: rust::RustParser::new()?,
         })
     }
 
@@ -30,7 +38,10 @@ impl ParserManager {
 
         match extension {
             "py" => self.python_parser.parse_file(content, file_path, graph),
-            _ => Ok(()), // Skip non-Python files for now
+            "js" | "jsx" | "mjs" => self.javascript_parser.parse_file(content, file_path, graph),
+            "ts" | "tsx" => self.typescript_parser.parse_file(content, file_path, graph),
+            "rs" => self.rust_parser.parse_file(content, file_path, graph),
+            _ => Ok(()), // Skip unsupported files
         }
     }
 
@@ -41,6 +52,9 @@ impl ParserManager {
 
         match extension {
             "py" => Some(Language::Python),
+            "js" | "jsx" | "mjs" => Some(Language::JavaScript),
+            "ts" | "tsx" => Some(Language::TypeScript),
+            "rs" => Some(Language::Rust),
             _ => None,
         }
     }

@@ -60,7 +60,7 @@ impl Indexer {
         let mut file_count = 0;
         let mut function_count = 0;
 
-        let supported_extensions = ["py"];
+        let supported_extensions = ["py", "js", "jsx", "mjs", "ts", "tsx", "rs"];
         
         for entry in WalkDir::new(project_path)
             .into_iter()

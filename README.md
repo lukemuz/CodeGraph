@@ -13,72 +13,123 @@ CodeGraph solves a fundamental problem: **LLMs need better code context than tra
 - 🔍 **Find**: Intelligent function search with fuzzy matching and confidence scores
 - 💥 **Impact Analysis**: Understand what would break if you change a function
 - 🔌 **MCP Integration**: Works seamlessly with Claude Desktop, VS Code, and other MCP clients
-- ⚡ **Tree-sitter Parsing**: Accurate AST-based analysis (currently supports Python)
+- ⚡ **Tree-sitter Parsing**: Accurate AST-based analysis (supports Python, JavaScript, TypeScript, and Rust)
 
 ## 🛠️ Installation
 
+### Option 1: Quick Install (Recommended)
+
+Install CodeGraph with our one-liner script:
+
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/codegraph.git
-cd codegraph
+curl -fsSL https://raw.githubusercontent.com/lucasmuzynoski/CodeGraph/main/install.sh | bash
+```
 
-# Build the project
+This will:
+- Detect your OS and architecture automatically
+- Download the latest pre-built binary
+- Install it to `~/.local/bin/codegraph`
+- Show you how to configure it with Claude Code or Cursor
+
+### Option 2: Manual Download
+
+Download pre-built binaries from [GitHub Releases](https://github.com/lucasmuzynoski/CodeGraph/releases):
+
+- **Linux (x64)**: `codegraph-x86_64-unknown-linux-musl.tar.gz`
+- **macOS (Intel)**: `codegraph-x86_64-apple-darwin.tar.gz` 
+- **macOS (Apple Silicon)**: `codegraph-aarch64-apple-darwin.tar.gz`
+- **Windows**: `codegraph-x86_64-pc-windows-msvc.zip`
+
+### Option 3: Install from Source
+
+If you have Rust installed:
+
+```bash
+cargo install --git https://github.com/lucasmuzynoski/CodeGraph
+```
+
+### Option 4: Build from Source
+
+```bash
+git clone https://github.com/lucasmuzynoski/CodeGraph.git
+cd CodeGraph
 cargo build --release
-
-# The binary will be available at ./target/release/codegraph
+# Binary at ./target/release/codegraph
 ```
 
 ## 📖 Quick Start
 
-### 1. Index Your Project
+### 1. Index Your Project (Optional)
 
-First, build an index of your codebase:
+CodeGraph automatically indexes your project when first used, but you can manually index for better performance:
 
 ```bash
-# Index the current directory
-./target/release/codegraph index .
+# Index the current directory  
+codegraph index .
 
 # Or index a specific project
-./target/release/codegraph index /path/to/your/project
+codegraph index /path/to/your/project
 
 # Force rebuild if index exists
-./target/release/codegraph index . --force --verbose
+codegraph index . --force --verbose
 ```
 
 This creates a `.codegraph/index.bin` file containing the function graph.
 
-### 2. Start the MCP Server
+### 2. Connect with MCP Clients
+
+#### Claude Code
+
+Add CodeGraph to Claude Code:
 
 ```bash
-# Start the MCP server (uses stdin/stdout)
-./target/release/codegraph serve
-
-# Or specify a custom index path
-./target/release/codegraph serve --index /path/to/index.bin
+claude mcp add codegraph -- codegraph mcp
 ```
 
-### 3. Connect with MCP Client
+#### Cursor
 
-The server follows the Model Context Protocol and can be used with any MCP client. Here's an example configuration for Claude Desktop:
+Add to `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "codegraph": {
+      "command": "codegraph",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+#### Claude Desktop
+
+Add to your Claude Desktop configuration:
 
 ```json
 {
   "mcpServers": {
     "codegraph": {
       "command": "/path/to/codegraph",
-      "args": ["serve", "--index", "/path/to/your/project/.codegraph/index.bin"]
+      "args": ["mcp"]
     }
   }
 }
 ```
 
+### 3. Start Using CodeGraph
+
+That's it! CodeGraph will automatically:
+- Index your project when first accessed
+- Use the current working directory as the project root
+- Provide the three core operations: Navigate, Find, and Impact Analysis
+
 ## 🎯 Core Operations
 
 CodeGraph provides three powerful operations for code navigation:
 
-### 🧭 Navigate
+### 🧭 Navigate (Function Navigator)
 
-Explore a function and its relationships:
+Explore a specific function and its code relationships. Perfect for understanding data flow, tracing execution paths, or getting oriented in unfamiliar code:
 
 **Input:**
 ```json
@@ -115,12 +166,14 @@ Explore a function and its relationships:
 
 **Use Cases:**
 - 🔄 Understanding data flow through function calls
-- 📁 Seeing all functions in the same file (siblings)
+- 📁 Seeing all functions in the same file (siblings)  
 - 🕳️ Finding entry points and leaf functions
+- 🧭 Getting oriented in unfamiliar codebases
+- 📊 Tracing execution paths and call chains
 
-### 🔍 Find
+### 🔍 Find (Function Finder)
 
-Search for functions with intelligent matching:
+Search for functions across the codebase using fuzzy matching. Ideal when you don't know exact function names or want to discover functions related to a concept:
 
 **Input:**
 ```json
@@ -152,13 +205,15 @@ Search for functions with intelligent matching:
 3. **Regex fallback** for broader patterns (confidence: 0.3-0.9)
 
 **Use Cases:**
-- 🎯 Finding functions by partial names
-- 📂 Scoped searches within directories  
-- 🔗 Discovering related functionality
+- 🎯 Finding functions by partial names or concepts
+- 📂 Scoped searches within specific directories
+- 🔗 Discovering related functionality across the codebase
+- 🔍 Exploring unfamiliar codebases to understand structure
+- 💡 Finding functions when you only remember part of the name
 
-### 💥 Impact Analysis
+### 💥 Impact Analysis (Impact Analyzer)
 
-Understand what would break if you change a function:
+Analyze the blast radius of changing a function - understand what would break if you modify, rename, or delete it. Essential for safe refactoring and assessing technical debt:
 
 **Input:**
 ```json
@@ -191,9 +246,11 @@ Understand what would break if you change a function:
 - **High**: 10+ total affected functions
 
 **Use Cases:**
-- ⚠️ Assessing refactoring safety
-- 🧪 Understanding test coverage needs
-- 🔄 Planning breaking changes
+- ⚠️ Assessing refactoring safety before making changes
+- 🧪 Understanding test coverage and what tests need updating
+- 🔄 Planning breaking changes and their scope
+- 💸 Evaluating technical debt impact
+- 🔍 Understanding function dependency chains
 
 ## 🎨 Example Workflow
 
@@ -247,7 +304,7 @@ The LLM now has complete context about the validation pipeline, its dependencies
 
 ### Technical Details
 
-- **Parser**: Tree-sitter for accurate AST parsing (Python support)
+- **Parser**: Tree-sitter for accurate AST parsing (Python, JavaScript, TypeScript, Rust support)
 - **Graph**: Petgraph for efficient directed graph operations
 - **Storage**: Bincode for fast serialization/deserialization
 - **Protocol**: Full MCP compliance with JSON-RPC 2.0
@@ -256,8 +313,8 @@ The LLM now has complete context about the validation pipeline, its dependencies
 
 ## 🔮 Future Enhancements
 
-- 📝 **Multi-language**: JavaScript, TypeScript, Rust, Go support
-- 🌐 **Cross-language**: Track calls between languages
+- 📝 **More Languages**: Go, C++, Java, C# support
+- 🌐 **Cross-language**: Track calls between different languages
 - 📚 **Documentation**: Extract and index function docstrings
 - 🔄 **Live Updates**: Watch file changes and update index
 - 📊 **Metrics**: Function complexity, usage statistics

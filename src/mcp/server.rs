@@ -133,58 +133,147 @@ impl McpServer {
         let tools = vec![
             ToolDefinition {
                 name: "navigate".to_string(),
-                description: "Navigate to a function and see its relationships (calls, called by, siblings)".to_string(),
+                title: Some("Function Navigator".to_string()),
+                description: "Explore a specific function and its code relationships. Use this when you want to understand how a function connects to the rest of the codebase - what it calls, what calls it, and related functions in the same file. Perfect for understanding data flow, tracing execution paths, or getting oriented in unfamiliar code. Example use cases: 'How does process_data work?', 'What functions does authenticate call?', 'Show me the call chain from main to database operations.'".to_string(),
                 input_schema: json!({
                     "type": "object",
                     "properties": {
                         "function": {
                             "type": "string",
-                            "description": "Name of the function to navigate to"
+                            "description": "Exact name of the function to navigate to. Use the precise function name as it appears in the code (case-sensitive). Examples: 'process_data', 'UserService.createUser', 'calculateTotal'"
                         },
                         "depth": {
                             "type": "number",
-                            "description": "Depth of navigation (default: 1)",
+                            "description": "How many levels deep to explore relationships. 1 (default) shows direct relationships only. Higher values show transitive relationships but may return large results. Use 1-2 for focused exploration, 3-5 for comprehensive analysis.",
                             "minimum": 1,
-                            "maximum": 5
+                            "maximum": 5,
+                            "default": 1
                         }
                     },
                     "required": ["function"]
                 }),
+                output_schema: Some(json!({
+                    "type": "object",
+                    "properties": {
+                        "function": {
+                            "type": "object",
+                            "description": "Details about the target function"
+                        },
+                        "calls": {
+                            "type": "array", 
+                            "description": "Functions called by this function"
+                        },
+                        "called_by": {
+                            "type": "array",
+                            "description": "Functions that call this function"
+                        },
+                        "siblings": {
+                            "type": "array", 
+                            "description": "Other functions in the same file"
+                        },
+                        "summary": {
+                            "type": "string",
+                            "description": "Human-readable summary of relationships"
+                        }
+                    }
+                })),
+                annotations: Some(crate::mcp::ToolAnnotations {
+                    audience: Some(vec!["developer".to_string()]),
+                    priority: Some(0.8),
+                }),
             },
             ToolDefinition {
                 name: "find".to_string(),
-                description: "Find functions matching a query string".to_string(),
+                title: Some("Function Finder".to_string()),
+                description: "Search for functions across the codebase using fuzzy matching. Use this when you don't know the exact function name or want to discover functions related to a concept. Ideal for exploring unfamiliar codebases, finding functions by partial names, or discovering related functionality. The search combines exact matches, fuzzy matching, and regex patterns to find the most relevant functions. Example use cases: 'Find functions related to authentication', 'Search for data validation functions', 'What functions contain 'user' in their name?'".to_string(),
                 input_schema: json!({
                     "type": "object",
                     "properties": {
                         "query": {
                             "type": "string",
-                            "description": "Search query for function names"
+                            "description": "Search term for function names. Can be partial names, concepts, or patterns. Examples: 'auth' (finds authenticate, authorization), 'process' (finds processData, process_user), 'valid' (finds validate, is_valid). The search is case-insensitive and uses fuzzy matching."
                         },
                         "scope": {
                             "type": "string",
-                            "description": "Optional file path to limit search scope"
+                            "description": "Optional path to limit search to specific files or directories. Use file paths (like 'src/auth.py') or directory paths (like 'src/') to narrow results. Leave empty to search the entire codebase. Examples: 'src/models/', 'utils.py', 'tests/'"
                         }
                     },
                     "required": ["query"]
                 }),
+                output_schema: Some(json!({
+                    "type": "object",
+                    "properties": {
+                        "matches": {
+                            "type": "array",
+                            "description": "Functions matching the search query with confidence scores"
+                        },
+                        "grouped_by_file": {
+                            "type": "object",
+                            "description": "Results organized by file path"
+                        },
+                        "summary": {
+                            "type": "string",
+                            "description": "Human-readable summary of search results"
+                        }
+                    }
+                })),
+                annotations: Some(crate::mcp::ToolAnnotations {
+                    audience: Some(vec!["developer".to_string()]),
+                    priority: Some(0.9),
+                }),
             },
             ToolDefinition {
                 name: "impact".to_string(),
-                description: "Analyze the impact of changing a function (who calls it, transitive effects)".to_string(),
+                title: Some("Impact Analyzer".to_string()),
+                description: "Analyze the blast radius of changing a function - understand what would break if you modify, rename, or delete it. Essential for safe refactoring, assessing technical debt, and understanding code dependencies. Shows both direct callers and transitive impact through the entire call chain, plus provides a risk assessment. Use before making changes to existing functions, when planning refactoring, or to understand the scope of technical debt. Example use cases: 'Is it safe to modify this validation function?', 'What would break if I change this API endpoint?', 'How many functions depend on this utility?'".to_string(),
                 input_schema: json!({
                     "type": "object",
                     "properties": {
                         "function": {
                             "type": "string",
-                            "description": "Name of the function to analyze"
+                            "description": "Exact name of the function to analyze for impact. Must be the precise function name as it appears in the code. Examples: 'validateUser', 'DatabaseConnection.connect', 'calculatePrice'"
                         },
                         "include_tests": {
                             "type": "boolean",
-                            "description": "Whether to include test files in impact analysis (default: false)"
+                            "description": "Whether to include test files in the impact analysis. Set to true when you want to understand test coverage and what tests might need updating. Set to false (default) for cleaner analysis focused on production code. Including tests helps with comprehensive refactoring planning.",
+                            "default": false
                         }
                     },
                     "required": ["function"]
+                }),
+                output_schema: Some(json!({
+                    "type": "object",
+                    "properties": {
+                        "direct_callers": {
+                            "type": "array",
+                            "description": "Functions that directly call this function"
+                        },
+                        "transitive_impact": {
+                            "type": "array", 
+                            "description": "Functions indirectly affected through the call chain"
+                        },
+                        "affected_files": {
+                            "type": "array",
+                            "description": "Files that would be impacted by changes"
+                        },
+                        "test_files": {
+                            "type": "array",
+                            "description": "Test files that reference this function"
+                        },
+                        "risk_level": {
+                            "type": "string",
+                            "enum": ["low", "medium", "high"],
+                            "description": "Assessment of change risk"
+                        },
+                        "summary": {
+                            "type": "string",
+                            "description": "Human-readable impact summary"
+                        }
+                    }
+                })),
+                annotations: Some(crate::mcp::ToolAnnotations {
+                    audience: Some(vec!["developer".to_string()]),
+                    priority: Some(1.0),
                 }),
             },
         ];

@@ -45,15 +45,20 @@ impl FreshnessManager {
         
         debug!("Checking index staleness, last modified: {:?}", index_time);
         
-        // Collect a sample of Python files to check
-        let mut python_files = Vec::new();
+        // Collect a sample of source files to check
+        let supported_extensions = ["py", "js", "jsx", "mjs", "ts", "tsx", "rs"];
+        let mut source_files = Vec::new();
         for entry in walkdir::WalkDir::new(&self.project_path)
             .into_iter()
             .filter_map(|e| e.ok())
-            .filter(|e| e.path().extension().map_or(false, |ext| ext == "py"))
+            .filter(|e| {
+                e.path().extension()
+                    .and_then(|ext| ext.to_str())
+                    .map_or(false, |ext| supported_extensions.contains(&ext))
+            })
         {
-            python_files.push(entry.path().to_path_buf());
-            if python_files.len() >= self.sample_size * 3 {
+            source_files.push(entry.path().to_path_buf());
+            if source_files.len() >= self.sample_size * 3 {
                 break; // Collect more than we need for randomization
             }
         }
@@ -61,9 +66,9 @@ impl FreshnessManager {
         // Check a random sample
         use rand::seq::SliceRandom;
         let mut rng = rand::rng();
-        python_files.shuffle(&mut rng);
+        source_files.shuffle(&mut rng);
         
-        for file in python_files.iter().take(self.sample_size) {
+        for file in source_files.iter().take(self.sample_size) {
             if let Ok(file_meta) = fs::metadata(file) {
                 if let Ok(file_time) = file_meta.modified() {
                     if file_time > index_time {
@@ -126,18 +131,21 @@ impl FreshnessManager {
 
 /// Quick staleness check for on-demand validation
 pub async fn quick_staleness_check(index_path: &Path, project_path: &Path) -> Result<bool> {
-    // Just check if any .py file is newer than the index
+    // Just check if any source file is newer than the index
     let index_time = fs::metadata(index_path)?.modified()?;
+    let supported_extensions = ["py", "js", "jsx", "mjs", "ts", "tsx", "rs"];
     
-    // Quick check: look at just the top-level Python files
+    // Quick check: look at just the top-level source files
     for entry in fs::read_dir(project_path)? {
         let entry = entry?;
         let path = entry.path();
         
-        if path.extension().map_or(false, |ext| ext == "py") {
-            if let Ok(meta) = entry.metadata() {
-                if meta.modified()? > index_time {
-                    return Ok(true);
+        if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+            if supported_extensions.contains(&ext) {
+                if let Ok(meta) = entry.metadata() {
+                    if meta.modified()? > index_time {
+                        return Ok(true);
+                    }
                 }
             }
         }

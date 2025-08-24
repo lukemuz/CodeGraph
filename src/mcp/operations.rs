@@ -322,6 +322,7 @@ impl OperationHandler {
             Language::Python => "Python".to_string(),
             Language::JavaScript => "JavaScript".to_string(),
             Language::TypeScript => "TypeScript".to_string(),
+            Language::Rust => "Rust".to_string(),
         }
     }
 }

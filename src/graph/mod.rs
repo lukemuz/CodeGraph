@@ -8,6 +8,7 @@ pub enum Language {
     Python,
     JavaScript,
     TypeScript,
+    Rust,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
