@@ -22,7 +22,7 @@ CodeGraph solves a fundamental problem: **LLMs need better code context than tra
 Install CodeGraph with our one-liner script:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/lukemuz/CodeGraph/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/lukemuz/CodeGraph/master/install.sh | bash
 ```
 
 This will:
