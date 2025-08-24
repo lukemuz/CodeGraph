@@ -1,1 +1,4 @@
 /target
+.codegraph/
+.claude/
+.mcp.json

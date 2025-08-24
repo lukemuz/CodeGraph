@@ -134,7 +134,7 @@ impl McpServer {
             ToolDefinition {
                 name: "navigate".to_string(),
                 title: Some("Function Navigator".to_string()),
-                description: "Explore a specific function and its code relationships. Use this when you want to understand how a function connects to the rest of the codebase - what it calls, what calls it, and related functions in the same file. Perfect for understanding data flow, tracing execution paths, or getting oriented in unfamiliar code. Example use cases: 'How does process_data work?', 'What functions does authenticate call?', 'Show me the call chain from main to database operations.'".to_string(),
+                description: "Explore a function's bidirectional code relationships - see both what it calls (dependencies) and what calls it (dependents), plus related functions in the same file. Use for understanding code flow, tracing execution paths, or learning how a function works. Returns calls, called-by, and file context. Example use cases: 'How does process_data work?', 'What functions does authenticate call?', 'Show me what connects to the database layer.'".to_string(),
                 input_schema: json!({
                     "type": "object",
                     "properties": {
@@ -185,7 +185,29 @@ impl McpServer {
             ToolDefinition {
                 name: "find".to_string(),
                 title: Some("Function Finder".to_string()),
-                description: "Search for functions across the codebase using fuzzy matching. Use this when you don't know the exact function name or want to discover functions related to a concept. Ideal for exploring unfamiliar codebases, finding functions by partial names, or discovering related functionality. The search combines exact matches, fuzzy matching, and regex patterns to find the most relevant functions. Example use cases: 'Find functions related to authentication', 'Search for data validation functions', 'What functions contain 'user' in their name?'".to_string(),
+                description: "Search for functions across the codebase using intelligent fuzzy matching. Returns up to 10 matching functions with their signatures, file locations, and brief context.
+
+WHEN TO USE:
+- You don't know the exact function name
+- You want to discover related functionality
+- You need to explore an unfamiliar codebase
+- You want to find all functions matching a pattern
+
+SEARCH CAPABILITIES:
+- Partial name matching (e.g., 'auth' finds 'authenticate', 'authorization')
+- Typo tolerance (e.g., 'proccess' finds 'process')
+- Case-insensitive
+- Regex patterns supported
+
+EXAMPLES:
+- 'user' - finds all user-related functions (getUserById, process_user_data, validateUserInput)
+- 'init' - finds initialization functions (initialize, initConfig, __init__)
+- 'handle.*error' - regex to find error handlers
+- 'parse' - finds parsing functions across all file types
+
+RETURNS: Up to 10 functions ranked by relevance, with signatures, file paths, and line numbers.
+
+TIP: Start with broad searches, then narrow with 'scope' parameter if too many results.".to_string(),
                 input_schema: json!({
                     "type": "object",
                     "properties": {
@@ -225,7 +247,7 @@ impl McpServer {
             ToolDefinition {
                 name: "impact".to_string(),
                 title: Some("Impact Analyzer".to_string()),
-                description: "Analyze the blast radius of changing a function - understand what would break if you modify, rename, or delete it. Essential for safe refactoring, assessing technical debt, and understanding code dependencies. Shows both direct callers and transitive impact through the entire call chain, plus provides a risk assessment. Use before making changes to existing functions, when planning refactoring, or to understand the scope of technical debt. Example use cases: 'Is it safe to modify this validation function?', 'What would break if I change this API endpoint?', 'How many functions depend on this utility?'".to_string(),
+                description: "Analyze the change impact of a function - find all code that would be affected if you modify, rename, or delete it. Shows ONLY upstream dependencies (what depends on this function), not what it calls. Provides risk assessment for safe refactoring. Use when planning changes to understand the blast radius. Different from navigate: impact is one-way (who depends on me), navigate is two-way (calls and called-by). Example use cases: 'Is it safe to modify this validation function?', 'What would break if I change this API endpoint?', 'How many functions depend on this utility?'".to_string(),
                 input_schema: json!({
                     "type": "object",
                     "properties": {

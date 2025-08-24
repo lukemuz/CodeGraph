@@ -98,14 +98,22 @@ impl JavaScriptParser {
 
     fn extract_signature(&self, node: &Node, content: &str) -> String {
         if let Ok(signature) = node.utf8_text(content.as_bytes()) {
-            let first_line = signature.lines().next().unwrap_or("");
+            // Find the end of the signature (opening brace)
+            let end_pos = signature.find('{');
             
-            // Clean up the signature
-            if first_line.contains("{") {
-                first_line.split("{").next().unwrap_or(first_line).trim().to_string()
+            let sig_text = if let Some(pos) = end_pos {
+                &signature[..pos]
             } else {
-                first_line.trim().to_string()
-            }
+                signature
+            };
+            
+            // Normalize whitespace: replace newlines and multiple spaces with single spaces
+            sig_text
+                .lines()
+                .map(|line| line.trim())
+                .filter(|line| !line.is_empty())
+                .collect::<Vec<_>>()
+                .join(" ")
         } else {
             String::new()
         }

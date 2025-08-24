@@ -57,12 +57,22 @@ impl PythonParser {
 
     fn extract_signature(&self, node: &Node, content: &str) -> String {
         if let Ok(signature) = node.utf8_text(content.as_bytes()) {
-            signature
+            // For Python, find the colon that ends the signature
+            let end_pos = signature.find(':');
+            
+            let sig_text = if let Some(pos) = end_pos {
+                &signature[..pos]
+            } else {
+                signature
+            };
+            
+            // Normalize whitespace: replace newlines and multiple spaces with single spaces
+            sig_text
                 .lines()
-                .next()
-                .unwrap_or("")
-                .trim_end_matches(':')
-                .to_string()
+                .map(|line| line.trim())
+                .filter(|line| !line.is_empty())
+                .collect::<Vec<_>>()
+                .join(" ")
         } else {
             String::new()
         }

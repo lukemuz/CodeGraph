@@ -131,16 +131,22 @@ impl RustParser {
 
     fn extract_signature(&self, node: &Node, content: &str) -> String {
         if let Ok(signature) = node.utf8_text(content.as_bytes()) {
-            let first_line = signature.lines().next().unwrap_or("");
+            // Find the end of the signature (opening brace or semicolon)
+            let end_pos = signature.find('{').or_else(|| signature.find(';'));
             
-            // For Rust, extract up to the opening brace or semicolon
-            if let Some(brace_pos) = first_line.find('{') {
-                first_line[..brace_pos].trim().to_string()
-            } else if let Some(semi_pos) = first_line.find(';') {
-                first_line[..semi_pos].trim().to_string()
+            let sig_text = if let Some(pos) = end_pos {
+                &signature[..pos]
             } else {
-                first_line.trim().to_string()
-            }
+                signature
+            };
+            
+            // Normalize whitespace: replace newlines and multiple spaces with single spaces
+            sig_text
+                .lines()
+                .map(|line| line.trim())
+                .filter(|line| !line.is_empty())
+                .collect::<Vec<_>>()
+                .join(" ")
         } else {
             String::new()
         }
