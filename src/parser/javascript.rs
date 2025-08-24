@@ -6,7 +6,6 @@ use std::path::Path;
 use tree_sitter::{Node, Parser, Query, QueryCursor, Tree, StreamingIterator};
 
 pub struct JavaScriptParser {
-    parser: Parser,
     function_query: Query,
     call_query: Query,
     language: Language,
@@ -91,7 +90,6 @@ impl JavaScriptParser {
         )?;
 
         Ok(Self {
-            parser,
             function_query,
             call_query,
             language,

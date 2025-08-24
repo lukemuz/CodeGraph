@@ -6,7 +6,6 @@ use std::path::Path;
 use tree_sitter::{Node, Parser, Query, QueryCursor, Tree, StreamingIterator};
 
 pub struct PythonParser {
-    parser: Parser,
     function_query: Query,
     call_query: Query,
 }
@@ -51,7 +50,6 @@ impl PythonParser {
         )?;
 
         Ok(Self {
-            parser,
             function_query,
             call_query,
         })

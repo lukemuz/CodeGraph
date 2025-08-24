@@ -10,6 +10,7 @@ use tokio::sync::Mutex;
 pub struct FreshnessManager {
     index_path: PathBuf,
     project_path: PathBuf,
+    #[allow(dead_code)]
     last_check: SystemTime,
     check_interval: Duration,
     // Sample size for staleness check (check N random files)
@@ -32,6 +33,7 @@ impl FreshnessManager {
         self
     }
     
+    #[allow(dead_code)]
     pub fn with_sample_size(mut self, size: usize) -> Self {
         self.sample_size = size;
         self
@@ -84,6 +86,7 @@ impl FreshnessManager {
     }
     
     /// Check if enough time has passed since last check
+    #[allow(dead_code)]
     pub fn should_check(&self) -> bool {
         match SystemTime::now().duration_since(self.last_check) {
             Ok(elapsed) => elapsed >= self.check_interval,
@@ -92,11 +95,13 @@ impl FreshnessManager {
     }
     
     /// Update the last check time
+    #[allow(dead_code)]
     pub fn mark_checked(&mut self) {
         self.last_check = SystemTime::now();
     }
     
     /// Start a background task that periodically checks freshness
+    #[allow(dead_code)]
     pub fn start_background_refresh(
         manager: Arc<Mutex<Self>>,
         rebuild_callback: Arc<dyn Fn() + Send + Sync>,
@@ -130,6 +135,7 @@ impl FreshnessManager {
 }
 
 /// Quick staleness check for on-demand validation
+#[allow(dead_code)]
 pub async fn quick_staleness_check(index_path: &Path, project_path: &Path) -> Result<bool> {
     // Just check if any source file is newer than the index
     let index_time = fs::metadata(index_path)?.modified()?;

@@ -8,7 +8,43 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref_name }}
+          body: |
+            ## CodeGraph ${{ github.ref_name }}
+            
+            ### Installation
+            
+            #### Quick Install (Recommended)
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/lucasmuzynoski/CodeGraph/main/install.sh | bash
+            ```
+            
+            #### Manual Download
+            Download the appropriate binary for your platform below.
+            
+            ### What's New
+            - Zero-configuration setup - just install and go!
+            - Auto-indexing on first use
+            - Auto-refresh to keep index updated
+            - New 'mcp' command for simplified usage
+            - Environment variable support for project paths
+          draft: false
+          prerelease: false
+
+  build-release:
+    needs: create-release
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

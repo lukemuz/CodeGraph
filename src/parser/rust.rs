@@ -6,7 +6,6 @@ use std::path::Path;
 use tree_sitter::{Node, Parser, Query, QueryCursor, Tree, StreamingIterator};
 
 pub struct RustParser {
-    parser: Parser,
     function_query: Query,
     call_query: Query,
 }
@@ -125,7 +124,6 @@ impl RustParser {
         )?;
 
         Ok(Self {
-            parser,
             function_query,
             call_query,
         })

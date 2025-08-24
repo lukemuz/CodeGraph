@@ -45,6 +45,7 @@ impl ParserManager {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_language(file_path: &Path) -> Option<Language> {
         let extension = file_path
             .extension()

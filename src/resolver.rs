@@ -133,6 +133,7 @@ impl FunctionResolver {
         Ok(results)
     }
 
+    #[allow(dead_code)]
     pub fn find_functions_in_scope(
         &self,
         graph: &CodeGraph,
@@ -169,6 +170,7 @@ impl FunctionResolver {
         results
     }
 
+    #[allow(dead_code)]
     pub fn rank_by_popularity(&self, candidates: &mut [FunctionRef], graph: &CodeGraph) {
         let mut popularity_scores = HashMap::new();
 
