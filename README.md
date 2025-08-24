@@ -22,7 +22,7 @@ CodeGraph solves a fundamental problem: **LLMs need better code context than tra
 Install CodeGraph with our one-liner script:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/lucasmuzynoski/CodeGraph/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/lukemuz/CodeGraph/main/install.sh | bash
 ```
 
 This will:
@@ -33,7 +33,7 @@ This will:
 
 ### Option 2: Manual Download
 
-Download pre-built binaries from [GitHub Releases](https://github.com/lucasmuzynoski/CodeGraph/releases):
+Download pre-built binaries from [GitHub Releases](https://github.com/lukemuz/CodeGraph/releases):
 
 - **Linux (x64)**: `codegraph-x86_64-unknown-linux-musl.tar.gz`
 - **macOS (Intel)**: `codegraph-x86_64-apple-darwin.tar.gz` 
@@ -45,13 +45,13 @@ Download pre-built binaries from [GitHub Releases](https://github.com/lucasmuzyn
 If you have Rust installed:
 
 ```bash
-cargo install --git https://github.com/lucasmuzynoski/CodeGraph
+cargo install --git https://github.com/lukemuz/CodeGraph
 ```
 
 ### Option 4: Build from Source
 
 ```bash
-git clone https://github.com/lucasmuzynoski/CodeGraph.git
+git clone https://github.com/lukemuz/CodeGraph.git
 cd CodeGraph
 cargo build --release
 # Binary at ./target/release/codegraph
