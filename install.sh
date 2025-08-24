@@ -103,21 +103,30 @@ chmod +x "$INSTALL_DIR/$BINARY_NAME"
 cd /
 rm -rf "$TEMP_DIR"
 
-echo -e "${GREEN}✓ CodeGraph installed successfully!${NC}"
+echo -e "${GREEN}✅ CodeGraph installed successfully!${NC}"
 echo
-echo -e "${YELLOW}Next steps:${NC}"
-echo "1. Make sure $INSTALL_DIR is in your PATH"
-echo "2. Add to Claude Code:"
-echo "   claude mcp add codegraph -- $INSTALL_DIR/$BINARY_NAME mcp"
+echo -e "${YELLOW}Quick Setup (Recommended):${NC}"
+echo "Add CodeGraph to your MCP client with ONE of these methods:"
 echo
-echo "3. Or add to Cursor (~/.cursor/mcp.json):"
-echo '   {'
-echo '     "mcpServers": {'
-echo '       "codegraph": {'
-echo '         "command": "'$INSTALL_DIR/$BINARY_NAME'",'
-echo '         "args": ["mcp"]'
-echo '       }'
-echo '     }'
-echo '   }'
+echo -e "${GREEN}Option 1: Claude Code Desktop${NC}"
+echo "Run this command:"
+echo "  claude mcp add codegraph $INSTALL_DIR/$BINARY_NAME mcp"
+echo
+echo -e "${GREEN}Option 2: Cursor${NC}"
+echo "Add to ~/.cursor/mcp.json:"
+echo '{'
+echo '  "mcpServers": {'
+echo '    "codegraph": {'
+echo '      "command": "'$INSTALL_DIR/$BINARY_NAME'",'
+echo '      "args": ["mcp"],'
+echo '      "env": {'
+echo '        "CODEGRAPH_PROJECT": "/path/to/your/project"'
+echo '      }'
+echo '    }'
+echo '  }'
+echo '}'
+echo
+echo -e "${YELLOW}Note:${NC} CodeGraph will automatically index your project on first use!"
+echo "No manual setup required - just point it at your project directory."
 echo
 echo -e "${GREEN}Happy coding! 🚀${NC}"

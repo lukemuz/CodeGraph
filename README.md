@@ -59,9 +59,16 @@ cargo build --release
 
 ## 📖 Quick Start
 
-### 1. Index Your Project (Optional)
+### Zero Configuration Setup 🎉
 
-CodeGraph automatically indexes your project when first used, but you can manually index for better performance:
+CodeGraph now works with **zero configuration**! Just install and point it at your project - it will automatically:
+- Create an index on first use
+- Keep the index updated with auto-refresh
+- Work seamlessly with your MCP client
+
+### Manual Indexing (Optional)
+
+For large projects, you may want to pre-build the index:
 
 ```bash
 # Index the current directory  
@@ -78,12 +85,18 @@ This creates a `.codegraph/index.bin` file containing the function graph.
 
 ### 2. Connect with MCP Clients
 
-#### Claude Code
+#### Claude Code Desktop (Recommended)
 
-Add CodeGraph to Claude Code:
+Add CodeGraph with a single command:
 
 ```bash
 claude mcp add codegraph -- codegraph mcp
+```
+
+For a specific project directory:
+
+```bash
+claude mcp add codegraph --env CODEGRAPH_PROJECT=/path/to/project -- codegraph mcp
 ```
 
 #### Cursor
@@ -95,22 +108,28 @@ Add to `~/.cursor/mcp.json`:
   "mcpServers": {
     "codegraph": {
       "command": "codegraph",
-      "args": ["mcp"]
+      "args": ["mcp"],
+      "env": {
+        "CODEGRAPH_PROJECT": "/path/to/your/project"
+      }
     }
   }
 }
 ```
 
-#### Claude Desktop
+#### Other MCP Clients
 
-Add to your Claude Desktop configuration:
+For any MCP-compatible client, use:
 
 ```json
 {
   "mcpServers": {
     "codegraph": {
       "command": "/path/to/codegraph",
-      "args": ["mcp"]
+      "args": ["mcp"],
+      "env": {
+        "CODEGRAPH_PROJECT": "/path/to/your/project"
+      }
     }
   }
 }
@@ -119,8 +138,9 @@ Add to your Claude Desktop configuration:
 ### 3. Start Using CodeGraph
 
 That's it! CodeGraph will automatically:
-- Index your project when first accessed
-- Use the current working directory as the project root
+- Index your project on first use (no manual setup needed!)
+- Keep the index fresh with auto-refresh
+- Use the `CODEGRAPH_PROJECT` environment variable or current directory
 - Provide the three core operations: Navigate, Find, and Impact Analysis
 
 ## 🎯 Core Operations
@@ -285,6 +305,15 @@ Here's how CodeGraph helps with a real coding task:
    ```
 
 The LLM now has complete context about the validation pipeline, its dependencies, and the safety of making changes!
+
+## 🌟 What's New
+
+### v0.1.0 - Zero Configuration Release
+- **Auto-indexing**: No manual setup required - just install and go!
+- **Auto-refresh**: Keeps your index updated as you code
+- **Smart defaults**: Works out of the box with sensible settings
+- **MCP command**: New `mcp` subcommand for simplified MCP server usage
+- **Environment support**: Use `CODEGRAPH_PROJECT` to specify project paths
 
 ## 🏗️ How It Works
 

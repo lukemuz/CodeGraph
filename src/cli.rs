@@ -40,6 +40,15 @@ pub enum Commands {
         #[arg(long, help = "Freshness check interval in seconds (default: 300)")]
         refresh_interval: Option<u64>,
     },
+    
+    /// Run as MCP server (auto-indexes and auto-refreshes)
+    Mcp {
+        #[arg(short, long, help = "Project directory (defaults to current)")]
+        project: Option<PathBuf>,
+        
+        #[arg(long, help = "Freshness check interval in seconds (default: 300)")]
+        refresh_interval: Option<u64>,
+    },
 }
 
 pub struct Indexer {
@@ -200,17 +209,23 @@ pub async fn run_cli() -> Result<()> {
         }
         
         Commands::Serve { index, auto_refresh, refresh_interval } => {
+            let project_path = PathBuf::from(".");
             let index_path = index.as_ref()
                 .cloned()
-                .unwrap_or_else(|| Indexer::get_default_index_path(&PathBuf::from(".")));
-
-            if !index_path.exists() {
-                eprintln!("Error: Index file not found: {}. Run 'codegraph index' first.", index_path.display());
-                return Err(anyhow::anyhow!("Index file not found"));
-            }
+                .unwrap_or_else(|| Indexer::get_default_index_path(&project_path));
 
             let indexer = Indexer::new()?;
-            let graph = indexer.load_index(&index_path)?;
+            
+            // Auto-create index if it doesn't exist
+            let graph = if !index_path.exists() {
+                info!("Index not found, creating index for current directory...");
+                eprintln!("📊 First run detected - indexing current directory...");
+                indexer.index_project(&project_path, &index_path, false)?;
+                eprintln!("✅ Indexing complete!");
+                indexer.load_index(&index_path)?
+            } else {
+                indexer.load_index(&index_path)?
+            };
             
             let mut server = crate::mcp::server::McpServer::new(graph);
             
@@ -224,6 +239,42 @@ pub async fn run_cli() -> Result<()> {
                 info!("Auto-refresh enabled with interval: {} seconds", 
                       refresh_interval.unwrap_or(300));
             }
+            
+            server.run_stdio().await?;
+        }
+        
+        Commands::Mcp { project, refresh_interval } => {
+            // Use project directory from env var if set (for MCP client config)
+            let project_path = if let Ok(env_path) = std::env::var("CODEGRAPH_PROJECT") {
+                PathBuf::from(env_path)
+            } else {
+                project.as_ref().cloned().unwrap_or_else(|| PathBuf::from("."))
+            };
+            
+            let index_path = Indexer::get_default_index_path(&project_path);
+            let indexer = Indexer::new()?;
+            
+            // Auto-create or update index
+            let graph = if !index_path.exists() {
+                info!("Creating index for project: {}", project_path.display());
+                eprintln!("📊 Indexing project at {}...", project_path.display());
+                indexer.index_project(&project_path, &index_path, false)?;
+                eprintln!("✅ Indexing complete!");
+                indexer.load_index(&index_path)?
+            } else {
+                indexer.load_index(&index_path)?
+            };
+            
+            // Always enable auto-refresh in MCP mode
+            let server = crate::mcp::server::McpServer::new(graph)
+                .with_freshness(
+                    index_path.clone(),
+                    project_path,
+                    *refresh_interval
+                );
+            
+            info!("MCP server starting with auto-refresh (interval: {} seconds)", 
+                  refresh_interval.unwrap_or(300));
             
             server.run_stdio().await?;
         }
