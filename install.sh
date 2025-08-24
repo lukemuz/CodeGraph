@@ -9,7 +9,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Repository info
-REPO="lucasmuzynoski/CodeGraph"
+REPO="lukemuz/CodeGraph"
 BINARY_NAME="codegraph"
 
 # Detect OS and architecture
