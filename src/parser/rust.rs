@@ -1,4 +1,4 @@
-use crate::graph::{CallEdge, CallType, CodeGraph, FunctionNode, Language};
+use crate::graph::{RelationEdge, RelationType, CodeGraph, SymbolNode, SymbolType, Language};
 use crate::parser::LanguageParser;
 use anyhow::Result;
 use std::collections::HashMap;
@@ -255,25 +255,25 @@ impl LanguageParser for RustParser {
         let tree = parser.parse(content, None)
             .ok_or_else(|| anyhow::anyhow!("Failed to parse Rust file"))?;
 
-        let functions = self.extract_functions(&tree, content, file_path);
-        let mut function_map = HashMap::new();
+        let symbols = self.extract_symbols(&tree, content, file_path);
+        let mut symbol_map = HashMap::new();
 
-        for func in functions {
-            let node_idx = graph.add_function(func.clone());
-            function_map.insert(func.name.clone(), node_idx);
+        for symbol in symbols {
+            let node_idx = graph.add_symbol(symbol.clone());
+            symbol_map.insert(symbol.name.clone(), node_idx);
         }
 
-        let calls = self.extract_calls(&tree, content);
+        let relations = self.extract_relations(&tree, content);
         
-        for (caller_name, call_edge) in calls {
-            if let Some(&caller_idx) = function_map.get(&caller_name) {
+        for (caller_name, relation_edge) in relations {
+            if let Some(&caller_idx) = symbol_map.get(&caller_name) {
                 // Try to find the target function
-                for (target_name, &target_idx) in &function_map {
+                for (target_name, &target_idx) in &symbol_map {
                     // Match direct calls, method calls, or scoped calls
-                    if call_edge.call_expression == *target_name ||
-                       target_name.ends_with(&format!("::{}", call_edge.call_expression)) ||
-                       *target_name == format!("Self::{}", call_edge.call_expression) {
-                        graph.add_call(caller_idx, target_idx, call_edge.clone());
+                    if relation_edge.expression == *target_name ||
+                       target_name.ends_with(&format!("::{}", relation_edge.expression)) ||
+                       *target_name == format!("Self::{}", relation_edge.expression) {
+                        graph.add_relation(caller_idx, target_idx, relation_edge.clone());
                         break;
                     }
                 }
@@ -283,7 +283,7 @@ impl LanguageParser for RustParser {
         Ok(())
     }
 
-    fn extract_functions(&self, tree: &Tree, content: &str, file_path: &Path) -> Vec<FunctionNode> {
+    fn extract_symbols(&self, tree: &Tree, content: &str, file_path: &Path) -> Vec<SymbolNode> {
         let mut functions = Vec::new();
         let mut cursor = QueryCursor::new();
         let mut matches = cursor.matches(&self.function_query, tree.root_node(), content.as_bytes());
@@ -332,13 +332,15 @@ impl LanguageParser for RustParser {
                     func_name.to_string()
                 };
 
-                functions.push(FunctionNode {
+                functions.push(SymbolNode {
                     name: full_name,
                     file: file_path.to_path_buf(),
                     line: func_node.start_position().row + 1,
                     language: Language::Rust,
                     signature: self.extract_signature(&func_node, content),
                     module_path: self.extract_module_path(file_path),
+                    symbol_type: SymbolType::Function,
+                    visibility: None,
                 });
             }
         }
@@ -346,7 +348,7 @@ impl LanguageParser for RustParser {
         functions
     }
 
-    fn extract_calls(&self, tree: &Tree, content: &str) -> Vec<(String, CallEdge)> {
+    fn extract_relations(&self, tree: &Tree, content: &str) -> Vec<(String, RelationEdge)> {
         let mut calls = Vec::new();
         let mut cursor = QueryCursor::new();
         let mut matches = cursor.matches(&self.call_query, tree.root_node(), content.as_bytes());
@@ -375,20 +377,20 @@ impl LanguageParser for RustParser {
 
             if let (Some(name), Some(node)) = (call_name, call_node) {
                 if let Some(func) = self.find_containing_function(&node, content) {
-                    let call_type = if is_macro {
-                        CallType::Dynamic // Could add a Macro variant
+                    let relation_type = if is_macro {
+                        RelationType::DynamicCall // Macro expansion
                     } else if name.contains("::") {
-                        CallType::Direct
+                        RelationType::DirectCall
                     } else {
-                        CallType::Direct
+                        RelationType::DirectCall
                     };
 
                     calls.push((
                         func,
-                        CallEdge {
-                            call_type,
+                        RelationEdge {
+                            relation_type,
                             line: node.start_position().row + 1,
-                            call_expression: name.to_string(),
+                            expression: name.to_string(),
                         },
                     ));
                 }

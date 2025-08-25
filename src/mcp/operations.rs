@@ -31,7 +31,7 @@ impl OperationHandler {
 
         let best_match = &candidates[0];
         
-        if let Some(node_idx) = graph.function_index.get(&best_match.name).and_then(|v| v.first()) {
+        if let Some(node_idx) = graph.symbol_index.get(&best_match.name).and_then(|v| v.first()) {
             let function_node = graph.graph.node_weight(*node_idx).unwrap();
             
             let calls = self.get_function_calls(graph, *node_idx, depth.unwrap_or(1));
@@ -75,7 +75,7 @@ impl OperationHandler {
 
         let best_match = &candidates[0];
         
-        if let Some(node_idx) = graph.function_index.get(&best_match.name).and_then(|v| v.first()) {
+        if let Some(node_idx) = graph.symbol_index.get(&best_match.name).and_then(|v| v.first()) {
             let direct_callers = self.get_function_callers(graph, *node_idx, 1);
             let transitive_impact = self.get_transitive_impact(graph, *node_idx);
             

@@ -174,7 +174,7 @@ impl FunctionResolver {
     pub fn rank_by_popularity(&self, candidates: &mut [FunctionRef], graph: &CodeGraph) {
         let mut popularity_scores = HashMap::new();
 
-        for (name, indices) in &graph.function_index {
+        for (name, indices) in &graph.symbol_index {
             for &idx in indices {
                 let caller_count = graph.get_callers(idx).len();
                 popularity_scores.insert(name.clone(), caller_count);

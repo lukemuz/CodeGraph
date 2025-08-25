@@ -11,52 +11,80 @@ pub enum Language {
     Rust,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub enum SymbolType {
+    Function,
+    Class,
+    Struct,
+    Variable,
+    Constant,
+    Interface,
+    Enum,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct FunctionNode {
+pub struct SymbolNode {
     pub name: String,
     pub file: PathBuf,
     pub line: usize,
     pub language: Language,
     pub signature: String,
     pub module_path: Vec<String>,
+    pub symbol_type: SymbolType,
+    pub visibility: Option<String>, // public, private, protected, etc.
 }
 
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum CallType {
-    Direct,
+pub enum RelationType {
+    // Function calls
+    DirectCall,
     Import,
-    Dynamic,
-    Method,
+    DynamicCall,
+    MethodCall,
+    
+    // Class/struct relationships
+    Instantiation,   // Creating instances of classes/structs
+    Inheritance,     // Class extends/implements
+    FieldAccess,     // Accessing fields of structs/classes
+    
+    // Variable relationships
+    Assignment,      // Variable assignments
+    Reference,       // Variable usage/references
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CallEdge {
-    pub call_type: CallType,
+pub struct RelationEdge {
+    pub relation_type: RelationType,
     pub line: usize,
-    pub call_expression: String,
+    pub expression: String,
 }
+
 
 pub struct CodeGraph {
-    pub graph: DiGraph<FunctionNode, CallEdge>,
-    pub function_index: HashMap<String, Vec<NodeIndex>>,
+    pub graph: DiGraph<SymbolNode, RelationEdge>,
+    pub symbol_index: HashMap<String, Vec<NodeIndex>>,
     pub file_index: HashMap<PathBuf, Vec<NodeIndex>>,
+    pub type_index: HashMap<SymbolType, Vec<NodeIndex>>,
 }
 
 impl CodeGraph {
     pub fn new() -> Self {
         Self {
             graph: DiGraph::new(),
-            function_index: HashMap::new(),
+            symbol_index: HashMap::new(),
             file_index: HashMap::new(),
+            type_index: HashMap::new(),
         }
     }
 
-    pub fn add_function(&mut self, function: FunctionNode) -> NodeIndex {
-        let name = function.name.clone();
-        let file = function.file.clone();
-        let node_idx = self.graph.add_node(function);
+    pub fn add_symbol(&mut self, symbol: SymbolNode) -> NodeIndex {
+        let name = symbol.name.clone();
+        let file = symbol.file.clone();
+        let symbol_type = symbol.symbol_type.clone();
+        let node_idx = self.graph.add_node(symbol);
         
-        self.function_index
+        self.symbol_index
             .entry(name)
             .or_insert_with(Vec::new)
             .push(node_idx);
@@ -66,15 +94,20 @@ impl CodeGraph {
             .or_insert_with(Vec::new)
             .push(node_idx);
             
+        self.type_index
+            .entry(symbol_type)
+            .or_insert_with(Vec::new)
+            .push(node_idx);
+            
         node_idx
     }
 
-    pub fn add_call(&mut self, from: NodeIndex, to: NodeIndex, edge: CallEdge) {
+    pub fn add_relation(&mut self, from: NodeIndex, to: NodeIndex, edge: RelationEdge) {
         self.graph.add_edge(from, to, edge);
     }
 
     pub fn find_exact(&self, name: &str) -> Option<NodeIndex> {
-        self.function_index
+        self.symbol_index
             .get(name)
             .and_then(|indices| indices.first())
             .copied()
@@ -82,12 +115,19 @@ impl CodeGraph {
 
     pub fn find_by_pattern(&self, pattern: &str) -> Vec<NodeIndex> {
         let mut results = Vec::new();
-        for (func_name, indices) in &self.function_index {
-            if func_name.contains(pattern) {
+        for (symbol_name, indices) in &self.symbol_index {
+            if symbol_name.contains(pattern) {
                 results.extend(indices.iter().copied());
             }
         }
         results
+    }
+
+    pub fn find_by_type(&self, symbol_type: SymbolType) -> Vec<NodeIndex> {
+        self.type_index
+            .get(&symbol_type)
+            .cloned()
+            .unwrap_or_default()
     }
 
     pub fn get_callers(&self, node: NodeIndex) -> Vec<NodeIndex> {
@@ -133,21 +173,21 @@ impl CodeGraph {
     }
 
     pub fn deserialize(data: &[u8]) -> Result<Self, bincode::Error> {
-        let (nodes, edges): (Vec<FunctionNode>, Vec<(usize, usize, CallEdge)>) = 
+        let (nodes, edges): (Vec<SymbolNode>, Vec<(usize, usize, RelationEdge)>) = 
             bincode::deserialize(data)?;
         
         let mut graph = Self::new();
         let mut node_map = HashMap::new();
         
         for node in nodes {
-            let idx = graph.add_function(node);
+            let idx = graph.add_symbol(node);
             node_map.insert(node_map.len(), idx);
         }
         
         for (from, to, edge) in edges {
             if let (Some(&from_idx), Some(&to_idx)) = 
                 (node_map.get(&from), node_map.get(&to)) {
-                graph.add_call(from_idx, to_idx, edge);
+                graph.add_relation(from_idx, to_idx, edge);
             }
         }
         

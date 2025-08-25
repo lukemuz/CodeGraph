@@ -2,15 +2,15 @@ pub mod python;
 pub mod javascript;
 pub mod rust;
 
-use crate::graph::{CallEdge, CodeGraph, FunctionNode, Language};
+use crate::graph::{RelationEdge, CodeGraph, SymbolNode, Language};
 use anyhow::Result;
 use std::path::Path;
 use tree_sitter::Tree;
 
 pub trait LanguageParser {
     fn parse_file(&self, content: &str, file_path: &Path, graph: &mut CodeGraph) -> Result<()>;
-    fn extract_functions(&self, tree: &Tree, content: &str, file_path: &Path) -> Vec<FunctionNode>;
-    fn extract_calls(&self, tree: &Tree, content: &str) -> Vec<(String, CallEdge)>;
+    fn extract_symbols(&self, tree: &Tree, content: &str, file_path: &Path) -> Vec<SymbolNode>;
+    fn extract_relations(&self, tree: &Tree, content: &str) -> Vec<(String, RelationEdge)>;
 }
 
 pub struct ParserManager {

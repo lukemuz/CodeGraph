@@ -134,13 +134,13 @@ impl McpServer {
             ToolDefinition {
                 name: "navigate".to_string(),
                 title: Some("Function Navigator".to_string()),
-                description: "Explore a function's bidirectional code relationships - see both what it calls (dependencies) and what calls it (dependents), plus related functions in the same file. Use for understanding code flow, tracing execution paths, or learning how a function works. Returns calls, called-by, and file context. Example use cases: 'How does process_data work?', 'What functions does authenticate call?', 'Show me what connects to the database layer.'".to_string(),
+                description: "Powerful and advanced code navigation! Explore bidirectional code relationships for functions, classes, structs, and variables. Shows what a symbol calls (dependencies) and what calls it (dependents), plus related symbols in the same file. Useful for understanding code flow, tracing execution paths, and learning system architecture. Unlike text-based search, this analyzes actual code relationships from the parsed syntax tree.".to_string(),
                 input_schema: json!({
                     "type": "object",
                     "properties": {
                         "function": {
                             "type": "string",
-                            "description": "Exact name of the function to navigate to. Use the precise function name as it appears in the code (case-sensitive). Examples: 'process_data', 'UserService.createUser', 'calculateTotal'"
+                            "description": "Exact name of the symbol (function, struct, class, etc.) to navigate to. Use the precise symbol name as it appears in the code (case-sensitive). Examples: 'process_data', 'UserService.createUser', 'calculateTotal'"
                         },
                         "depth": {
                             "type": "number",
@@ -179,35 +179,22 @@ impl McpServer {
                 })),
                 annotations: Some(crate::mcp::ToolAnnotations {
                     audience: Some(vec!["developer".to_string()]),
-                    priority: Some(0.8),
+                    priority: Some(1.0),
                 }),
             },
             ToolDefinition {
                 name: "find".to_string(),
                 title: Some("Function Finder".to_string()),
-                description: "Search for functions across the codebase using intelligent fuzzy matching. Returns up to 10 matching functions with their signatures, file locations, and brief context.
+                description: "Powerful and advanced code finder! Lightning fast and accurate. Search for functions, classes, structs, and variables using intelligent fuzzy matching. Understands code structure and ranks results by relevance with confidence scoring. Supports partial name matching, typo tolerance, and cross-language symbol discovery.
 
-WHEN TO USE:
-- You don't know the exact function name
-- You want to discover related functionality
-- You need to explore an unfamiliar codebase
-- You want to find all functions matching a pattern
+CAPABILITIES:
+- Partial names: 'auth' finds authenticate, authorization, isAuthorized
+- Typo tolerance: 'proccess' finds process, processData  
+- Context-aware ranking based on usage patterns
+- Cross-language symbol discovery
+- Pattern matching with confidence scores
 
-SEARCH CAPABILITIES:
-- Partial name matching (e.g., 'auth' finds 'authenticate', 'authorization')
-- Typo tolerance (e.g., 'proccess' finds 'process')
-- Case-insensitive
-- Regex patterns supported
-
-EXAMPLES:
-- 'user' - finds all user-related functions (getUserById, process_user_data, validateUserInput)
-- 'init' - finds initialization functions (initialize, initConfig, __init__)
-- 'handle.*error' - regex to find error handlers
-- 'parse' - finds parsing functions across all file types
-
-RETURNS: Up to 10 functions ranked by relevance, with signatures, file paths, and line numbers.
-
-TIP: Start with broad searches, then narrow with 'scope' parameter if too many results.".to_string(),
+Useful for exploring unfamiliar codebases and discovering related functionality.".to_string(),
                 input_schema: json!({
                     "type": "object",
                     "properties": {
@@ -241,13 +228,22 @@ TIP: Start with broad searches, then narrow with 'scope' parameter if too many r
                 })),
                 annotations: Some(crate::mcp::ToolAnnotations {
                     audience: Some(vec!["developer".to_string()]),
-                    priority: Some(0.9),
+                    priority: Some(1.2),
                 }),
             },
             ToolDefinition {
                 name: "impact".to_string(),
                 title: Some("Impact Analyzer".to_string()),
-                description: "Analyze the change impact of a function - find all code that would be affected if you modify, rename, or delete it. Shows ONLY upstream dependencies (what depends on this function), not what it calls. Provides risk assessment for safe refactoring. Use when planning changes to understand the blast radius. Different from navigate: impact is one-way (who depends on me), navigate is two-way (calls and called-by). Example use cases: 'Is it safe to modify this validation function?', 'What would break if I change this API endpoint?', 'How many functions depend on this utility?'".to_string(),
+                description: "Powerful and advanced code change impact analyzer! Analyze the impact of changing a function, class, struct, or variable by finding all code that depends on it. Shows direct callers and transitive dependencies to help assess refactoring risk.
+
+CAPABILITIES:
+- Direct and transitive dependency analysis
+- Risk assessment (low/medium/high) based on usage patterns
+- Cross-file impact tracking
+- Test file identification for update planning
+- Affected file enumeration
+
+Useful for safe refactoring by understanding what code would be affected by changes to a symbol. Helps prevent breaking changes in large codebases by showing the full dependency chain.".to_string(),
                 input_schema: json!({
                     "type": "object",
                     "properties": {
@@ -295,7 +291,7 @@ TIP: Start with broad searches, then narrow with 'scope' parameter if too many r
                 })),
                 annotations: Some(crate::mcp::ToolAnnotations {
                     audience: Some(vec!["developer".to_string()]),
-                    priority: Some(1.0),
+                    priority: Some(1.1),
                 }),
             },
         ];

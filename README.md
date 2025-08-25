@@ -1,6 +1,6 @@
 # CodeGraph 🕸️
 
-A graph-based code navigation tool for LLMs that provides intelligent code context through the Model Context Protocol (MCP). CodeGraph builds comprehensive function call graphs from your codebase and offers three powerful operations to help LLMs understand code relationships and dependencies.
+A graph-based code navigation tool for LLMs that provides intelligent code context through the Model Context Protocol (MCP). CodeGraph builds comprehensive relationship graphs from your codebase, tracking connections between functions, classes, structs, variables, and more. It offers three powerful operations to help LLMs understand code structure and dependencies.
 
 ## 🚀 What is CodeGraph?
 
@@ -8,12 +8,13 @@ CodeGraph solves a fundamental problem: **LLMs need better code context than tra
 
 ### Key Features
 
-- 🌐 **Function Call Graphs**: Build directed graphs showing how functions call each other
-- 🧭 **Navigate**: Explore function relationships (what it calls, what calls it, siblings)
-- 🔍 **Find**: Intelligent function search with fuzzy matching and confidence scores
-- 💥 **Impact Analysis**: Understand what would break if you change a function
+- 🌐 **Universal Symbol Graphs**: Track relationships between functions, classes, structs, variables, constants, and interfaces
+- 🧭 **Navigate**: Explore symbol relationships (dependencies, dependents, inheritance, field access)
+- 🔍 **Find**: Intelligent symbol search with fuzzy matching and confidence scores across all code elements  
+- 💥 **Impact Analysis**: Understand what would break if you change any symbol (functions, classes, variables)
 - 🔌 **MCP Integration**: Works seamlessly with Claude Desktop, VS Code, and other MCP clients
 - ⚡ **Tree-sitter Parsing**: Accurate AST-based analysis (supports Python, JavaScript, TypeScript, and Rust)
+- 🎯 **Rich Relationships**: Track function calls, class instantiation, inheritance, field access, and variable usage
 
 ## 🛠️ Installation
 
@@ -81,7 +82,7 @@ codegraph index /path/to/your/project
 codegraph index . --force --verbose
 ```
 
-This creates a `.codegraph/index.bin` file containing the function graph.
+This creates a `.codegraph/index.bin` file containing the complete symbol relationship graph.
 
 ### 2. Connect with MCP Clients
 
@@ -147,14 +148,14 @@ That's it! CodeGraph will automatically:
 
 CodeGraph provides three powerful operations for code navigation:
 
-### 🧭 Navigate (Function Navigator)
+### 🧭 Navigate (Symbol Navigator)
 
-Explore a specific function and its code relationships. Perfect for understanding data flow, tracing execution paths, or getting oriented in unfamiliar code:
+Explore any code symbol (function, class, struct, variable) and its relationships. Perfect for understanding data flow, tracing execution paths, or getting oriented in unfamiliar code:
 
 **Input:**
 ```json
 {
-  "function": "process_data",
+  "function": "process_data",  // Works with any symbol: functions, classes, structs, variables
   "depth": 2
 }
 ```
@@ -185,15 +186,15 @@ Explore a specific function and its code relationships. Perfect for understandin
 ```
 
 **Use Cases:**
-- 🔄 Understanding data flow through function calls
-- 📁 Seeing all functions in the same file (siblings)  
-- 🕳️ Finding entry points and leaf functions
-- 🧭 Getting oriented in unfamiliar codebases
-- 📊 Tracing execution paths and call chains
+- 🔄 Understanding data flow through function calls, object instantiation, and variable usage
+- 📁 Seeing all related symbols in the same file (siblings)  
+- 🕳️ Finding entry points, dependencies, and inheritance chains
+- 🧭 Getting oriented in unfamiliar codebases across all symbol types
+- 📊 Tracing execution paths, class hierarchies, and data relationships
 
-### 🔍 Find (Function Finder)
+### 🔍 Find (Symbol Finder)
 
-Search for functions across the codebase using fuzzy matching. Ideal when you don't know exact function names or want to discover functions related to a concept:
+Search for any code symbols (functions, classes, structs, variables) across the codebase using intelligent fuzzy matching. Ideal when you don't know exact names or want to discover symbols related to a concept:
 
 **Input:**
 ```json
@@ -215,7 +216,7 @@ Search for functions across the codebase using fuzzy matching. Ideal when you do
     "main.py": [...],
     "utils.py": [...]
   },
-  "summary": "Found 3 functions matching 'data' in src/."
+  "summary": "Found 3 symbols matching 'data' in src/."
 }
 ```
 
@@ -225,20 +226,20 @@ Search for functions across the codebase using fuzzy matching. Ideal when you do
 3. **Regex fallback** for broader patterns (confidence: 0.3-0.9)
 
 **Use Cases:**
-- 🎯 Finding functions by partial names or concepts
+- 🎯 Finding symbols (functions, classes, variables) by partial names or concepts
 - 📂 Scoped searches within specific directories
-- 🔗 Discovering related functionality across the codebase
-- 🔍 Exploring unfamiliar codebases to understand structure
-- 💡 Finding functions when you only remember part of the name
+- 🔗 Discovering related functionality and data structures across the codebase
+- 🔍 Exploring unfamiliar codebases to understand structure and architecture
+- 💡 Finding symbols when you only remember part of the name
 
 ### 💥 Impact Analysis (Impact Analyzer)
 
-Analyze the blast radius of changing a function - understand what would break if you modify, rename, or delete it. Essential for safe refactoring and assessing technical debt:
+Analyze the blast radius of changing any symbol (function, class, struct, variable) - understand what would break if you modify, rename, or delete it. Essential for safe refactoring and assessing technical debt:
 
 **Input:**
 ```json
 {
-  "function": "clean_data",
+  "function": "clean_data",  // Works with any symbol: functions, classes, structs, variables
   "include_tests": false
 }
 ```
@@ -266,11 +267,11 @@ Analyze the blast radius of changing a function - understand what would break if
 - **High**: 10+ total affected functions
 
 **Use Cases:**
-- ⚠️ Assessing refactoring safety before making changes
+- ⚠️ Assessing refactoring safety before making changes to any symbol
 - 🧪 Understanding test coverage and what tests need updating
-- 🔄 Planning breaking changes and their scope
-- 💸 Evaluating technical debt impact
-- 🔍 Understanding function dependency chains
+- 🔄 Planning breaking changes and their scope across classes, functions, and variables
+- 💸 Evaluating technical debt impact on the entire codebase
+- 🔍 Understanding symbol dependency chains and inheritance hierarchies
 
 ## 🎨 Example Workflow
 
@@ -331,14 +332,41 @@ The LLM now has complete context about the validation pipeline, its dependencies
                          confidence scores       MCP clients
 ```
 
+## 🌟 What's New in v0.3.0
+
+### Universal Symbol Support
+CodeGraph now tracks relationships between **all** code symbols, not just functions:
+
+- **Functions**: Traditional call relationships, recursion detection
+- **Classes**: Inheritance, instantiation, method relationships  
+- **Structs**: Field access, construction, composition patterns
+- **Variables**: Assignment tracking, usage analysis, scope relationships
+- **Constants**: Definition and usage across modules
+- **Interfaces**: Implementation tracking, contract analysis
+
+### Enhanced Relationship Types
+Beyond simple function calls, CodeGraph now understands:
+
+- **📞 DirectCall**: Function-to-function calls
+- **🏗️ Instantiation**: Object and struct creation
+- **🧬 Inheritance**: Class extends/implements relationships
+- **🔗 FieldAccess**: Property and field usage
+- **📝 Assignment**: Variable assignments and mutations
+- **👁️ Reference**: Variable and constant references
+
+### Professional MCP Integration
+- **Balanced priorities**: Tools compete fairly with built-in capabilities
+- **Clear descriptions**: Professional, accurate tool documentation
+- **Enhanced discoverability**: Better LLM adoption through improved messaging
+
 ### Technical Details
 
 - **Parser**: Tree-sitter for accurate AST parsing (Python, JavaScript, TypeScript, Rust support)
-- **Graph**: Petgraph for efficient directed graph operations
-- **Storage**: Bincode for fast serialization/deserialization
+- **Graph**: Petgraph for efficient directed graph operations with universal symbol support
+- **Storage**: Bincode for fast serialization/deserialization of symbol relationships
 - **Protocol**: Full MCP compliance with JSON-RPC 2.0
-- **Search**: Multi-layered resolution with fuzzy matching
-- **Performance**: Indexed lookups, cached parsing results
+- **Search**: Multi-layered resolution with fuzzy matching across all symbol types
+- **Performance**: Type-aware indexing, symbol lookups, cached parsing results
 
 ## 🔮 Future Enhancements
 
