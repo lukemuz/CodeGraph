@@ -5,7 +5,6 @@ use crate::mcp::{
     ToolDefinition, NavigateParams, ImpactParams, FindParams,
 };
 use crate::mcp::operations::OperationHandler;
-use crate::freshness::FreshnessManager;
 use anyhow::Result;
 use serde_json::{json, Value};
 use std::sync::Arc;
@@ -18,7 +17,6 @@ pub struct McpServer {
     graph: Arc<RwLock<CodeGraph>>,
     operations: OperationHandler,
     initialized: Arc<Mutex<bool>>,
-    freshness_manager: Option<Arc<Mutex<FreshnessManager>>>,
     index_path: PathBuf,
     project_path: PathBuf,
 }
@@ -29,44 +27,30 @@ impl McpServer {
             graph: Arc::new(RwLock::new(graph)),
             operations: OperationHandler::new(),
             initialized: Arc::new(Mutex::new(false)),
-            freshness_manager: None,
             index_path: PathBuf::from(".codegraph/index.bin"),
             project_path: PathBuf::from("."),
         }
     }
     
-    pub fn with_freshness(mut self, index_path: PathBuf, project_path: PathBuf, check_interval: Option<u64>) -> Self {
-        let mut manager = FreshnessManager::new(index_path.clone(), project_path.clone());
-        
-        if let Some(interval) = check_interval {
-            manager = manager.with_interval(interval);
-        }
-        
-        self.freshness_manager = Some(Arc::new(Mutex::new(manager)));
+    pub fn with_project_paths(mut self, index_path: PathBuf, project_path: PathBuf) -> Self {
         self.index_path = index_path;
         self.project_path = project_path;
         self
     }
     
-    async fn ensure_fresh(&self) -> Result<()> {
-        if let Some(ref manager) = self.freshness_manager {
-            let mgr = manager.lock().await;
-            if mgr.is_stale()? {
-                info!("Index is stale, rebuilding...");
-                drop(mgr); // Release lock before rebuilding
-                
-                // Rebuild the index
-                let indexer = crate::cli::Indexer::new()?;
-                indexer.index_project(&self.project_path, &self.index_path, false)?;
-                
-                // Reload the graph
-                let new_graph = indexer.load_index(&self.index_path)?;
-                let mut graph = self.graph.write().await;
-                *graph = new_graph;
-                
-                info!("Index rebuilt successfully");
-            }
-        }
+    async fn rebuild_index(&self) -> Result<()> {
+        info!("Rebuilding index...");
+        
+        // Rebuild the index
+        let indexer = crate::cli::Indexer::new()?;
+        indexer.index_project(&self.project_path, &self.index_path, false)?;
+        
+        // Reload the graph
+        let new_graph = indexer.load_index(&self.index_path)?;
+        let mut graph = self.graph.write().await;
+        *graph = new_graph;
+        
+        info!("Index rebuilt successfully");
         Ok(())
     }
 
@@ -319,9 +303,9 @@ Useful for safe refactoring by understanding what code would be affected by chan
             };
         }
         
-        // Check freshness before processing tool call
-        if let Err(e) = self.ensure_fresh().await {
-            warn!("Failed to check freshness: {}", e);
+        // Always rebuild index before processing tool call
+        if let Err(e) = self.rebuild_index().await {
+            warn!("Failed to rebuild index: {}", e);
             // Continue anyway - better to serve stale data than fail
         }
 

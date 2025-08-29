@@ -3,7 +3,6 @@ mod graph;
 mod parser;
 mod resolver;
 mod mcp;
-mod freshness;
 
 use anyhow::Result;
 use tracing_subscriber;

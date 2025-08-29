@@ -28,7 +28,7 @@ jobs:
             
             #### Quick Install (Recommended)
             ```bash
-            curl -fsSL https://raw.githubusercontent.com/lucasmuzynoski/CodeGraph/main/install.sh | bash
+            curl -fsSL https://raw.githubusercontent.com/lucasmuzynoski/CodeGraph/master/install.sh | bash
             ```
             
             #### Manual Download

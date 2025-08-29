@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1] - 2025-08-29
+
+### 🚀 Performance & Simplicity
+
+#### Removed Lazy Refresh System
+- **REMOVED**: Complex sampling-based freshness checking (161 lines of code eliminated)
+- **IMPROVED**: Always rebuild index on MCP requests - simpler and more reliable
+- **PERFORMANCE**: Even large repos (34k+ files) rebuild in under 2 seconds
+- **REMOVED**: `--auto-refresh` and `--refresh-interval` CLI flags 
+- **RESULT**: Dramatically simpler codebase with better performance than "optimized" version
+
+**Rationale**: Timing analysis showed timestamp checking took 95% as long as full rebuild, making the complexity pointless. The "always rebuild" approach is faster, simpler, and always serves fresh data.
+
+---
+
 ## [0.3.0] - 2025-08-25
 
 ### 🎉 Major Features

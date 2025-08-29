@@ -33,21 +33,12 @@ pub enum Commands {
     Serve {
         #[arg(short, long, help = "Path to the index file")]
         index: Option<PathBuf>,
-        
-        #[arg(long, help = "Enable automatic freshness checking")]
-        auto_refresh: bool,
-        
-        #[arg(long, help = "Freshness check interval in seconds (default: 300)")]
-        refresh_interval: Option<u64>,
     },
     
-    /// Run as MCP server (auto-indexes and auto-refreshes)
+    /// Run as MCP server (auto-indexes)
     Mcp {
         #[arg(short, long, help = "Project directory (defaults to current)")]
         project: Option<PathBuf>,
-        
-        #[arg(long, help = "Freshness check interval in seconds (default: 300)")]
-        refresh_interval: Option<u64>,
     },
 }
 
@@ -208,7 +199,7 @@ pub async fn run_cli() -> Result<()> {
             indexer.index_project(path, &output_path, *verbose)?;
         }
         
-        Commands::Serve { index, auto_refresh, refresh_interval } => {
+        Commands::Serve { index } => {
             let project_path = PathBuf::from(".");
             let index_path = index.as_ref()
                 .cloned()
@@ -227,23 +218,14 @@ pub async fn run_cli() -> Result<()> {
                 indexer.load_index(&index_path)?
             };
             
-            let mut server = crate::mcp::server::McpServer::new(graph);
-            
-            if *auto_refresh {
-                let project_path = PathBuf::from(".");
-                server = server.with_freshness(
-                    index_path.clone(), 
-                    project_path,
-                    *refresh_interval
-                );
-                info!("Auto-refresh enabled with interval: {} seconds", 
-                      refresh_interval.unwrap_or(300));
-            }
+            let project_path = PathBuf::from(".");
+            let server = crate::mcp::server::McpServer::new(graph)
+                .with_project_paths(index_path.clone(), project_path);
             
             server.run_stdio().await?;
         }
         
-        Commands::Mcp { project, refresh_interval } => {
+        Commands::Mcp { project } => {
             // Use project directory from env var if set (for MCP client config)
             let project_path = if let Ok(env_path) = std::env::var("CODEGRAPH_PROJECT") {
                 PathBuf::from(env_path)
@@ -265,16 +247,10 @@ pub async fn run_cli() -> Result<()> {
                 indexer.load_index(&index_path)?
             };
             
-            // Always enable auto-refresh in MCP mode
             let server = crate::mcp::server::McpServer::new(graph)
-                .with_freshness(
-                    index_path.clone(),
-                    project_path,
-                    *refresh_interval
-                );
+                .with_project_paths(index_path.clone(), project_path.clone());
             
-            info!("MCP server starting with auto-refresh (interval: {} seconds)", 
-                  refresh_interval.unwrap_or(300));
+            info!("MCP server starting (rebuilds on every request)");
             
             server.run_stdio().await?;
         }
